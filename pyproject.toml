@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "feed_reader"
+version = "0.1.0"
+description = "MCP server with decorators, unified logging, and multiple transports"
+readme = "README.md"
+authors = [
+    {name = "Tim Kitchens", email = "codingthefuturewithai@gmail.com"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "mcp>=1.0.0",
+    "mcp[cli]>=1.0.0",
+    "anyio>=4.5",
+    "starlette>=0.36.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "platformdirs>=4.0.0",
+    "python-dotenv>=1.0.0",
+    "click>=8.0.0",
+    "pyyaml>=6.0",
+    "loguru>=0.7.0",
+    "feedparser>=6.0.0",
+    "beautifulsoup4>=4.12.0",
+    "httpx>=0.27.0",
+    "aiosqlite>=0.19.0",
+    "lxml>=5.0.0",
+]
+
+[project.optional-dependencies]
+monitoring = ["psutil>=5.9.0"]
+ui = ["streamlit>=1.29.0"]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.1.0",
+]
+
+[project.scripts]
+# Single entry point for server that handles both transports
+feed_reader-server = "feed_reader.server.app:main"
+feed_reader-server-stdio = "feed_reader.server.app:main_stdio"
+feed_reader-server-http = "feed_reader.server.app:main_http"
+feed_reader-server-sse = "feed_reader.server.app:main_sse"
+feed_reader-client = "feed_reader.client.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["feed_reader*"]
+namespaces = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=feed_reader --cov-report=html --cov-report=term-missing" 

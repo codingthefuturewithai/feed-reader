@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  feed-reader:
+    build: .
+    container_name: feed-reader-mcp
+    ports:
+      - "${FEED_READER_PORT:-19000}:3001"
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PORT=3001
+      # DNS rebinding protection (disabled by default for development)
+      - MCP_DNS_REBINDING_PROTECTION=${MCP_DNS_REBINDING_PROTECTION:-false}
+      # Comma-separated allowed Host headers (only used when protection enabled)
+      - MCP_ALLOWED_HOSTS=${MCP_ALLOWED_HOSTS:-}
+    volumes:
+      - feed_reader_data:/home/appuser/.feed_reader
+      - feed_reader_config:/home/appuser/.config/feed_reader
+      - feed_reader_logs:/home/appuser/.local/share/feed_reader
+    restart: unless-stopped
+
+volumes:
+  feed_reader_data:
+  feed_reader_config:
+  feed_reader_logs:
