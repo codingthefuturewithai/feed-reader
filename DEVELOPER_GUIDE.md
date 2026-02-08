@@ -4,6 +4,8 @@ This guide is for developers working on this MCP server - whether you're brand n
 
 ## 🚀 Quick Navigation
 
+**Want a quick snapshot of this server?** Run `/server-overview` in Claude Code — it scans your project and tells you exactly what tools, deployment options, and configuration you have right now.
+
 **First time with this server?** Start with [Step 1: Interactive Learning](#step-1-interactive-learning-first-time-developers)
 
 **Returning to add features?** Jump to [Adding New Tools](#adding-new-tools-all-developers)
@@ -224,11 +226,19 @@ feed_reader/
 ├── server/
 │   └── app.py           # Main server - imports and registers tools
 ├── tools/
-│   └── example_tools.py # Example tools (remove when ready)
+│   └── feed_tools.py    # Feed management tools
+├── storage/
+│   └── database.py      # SQLite database for feeds/articles
+├── services/            # Feed parsing and discovery
 ├── decorators/          # Decorators (don't modify)
-├── tests/              # Test suite
-├── .reference/         # Patterns and examples (always available)
-└── .claude/commands/   # Claude Code commands
+├── ui/                  # Streamlit admin dashboard
+├── tests/               # Test suite
+├── scripts/
+│   └── docker.py        # Docker management (start/stop/update)
+├── Dockerfile           # Container build definition
+├── docker-compose.yml   # Docker Compose configuration
+├── .reference/          # Patterns and examples (always available)
+└── .claude/commands/    # Claude Code commands
 ```
 
 ---

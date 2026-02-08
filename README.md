@@ -1,289 +1,185 @@
-# feed_reader
+# Feed Reader
 
-MCP server with decorators, unified logging, and multiple transports
+An MCP server for managing RSS feeds and articles. Subscribe to blogs, scan for new articles, and track your reading progress — all accessible to AI assistants.
 
-**[➡️ REPLACE: Expand on the description above. What problems does it solve? What capabilities does it provide to AI tools?]**
+## 🚀 Quick Start
+
+**Using Claude Code?** Run `/server-overview` to see exactly what this server can do, or `/feed-reader` to start using it immediately.
+
+---
 
 ## Quick Start for MCP Clients
 
-### 1. Install the MCP server (Recommended)
+### 1. Run with Docker (Recommended)
 
-For the most reliable setup, first install the server as an isolated tool:
+The simplest way to run the server:
 
 ```bash
-# Install the MCP server
-uv tool install feed_reader
+# Clone and start
+git clone https://github.com/codingthefuturewithai/feed-reader.git
+cd feed-reader
+python scripts/docker.py start
+```
 
-# Find the installed binary path
-which feed_reader-server  # macOS/Linux
-where feed_reader-server  # Windows
+Then add to Claude Code:
+```bash
+claude mcp add feed-reader --transport http http://localhost:19000/mcp
 ```
 
 ### 2. Configure your MCP client
 
-Add this configuration to your MCP client settings using the absolute path from step 1:
-
 **For Claude Desktop**: Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
 
-**For Cline**: Add to `.vscode/settings.json` in your project
-
 ```json
 {
-  "feed_reader": {
-    "command": "/absolute/path/to/feed_reader-server"
+  "feed-reader": {
+    "type": "http",
+    "url": "http://localhost:19000/mcp"
   }
 }
 ```
 
-**[➡️ REPLACE: If your server requires environment variables, show them here:]
+**For STDIO transport** (alternative):
 ```json
 {
-  "feed_reader": {
-    "command": "/absolute/path/to/feed_reader-server",
-    "env": {
-      "API_KEY": "your-api-key-here",
-      "BASE_URL": "https://api.example.com"
-    }
-  }
-}
-```
-**[End of optional environment variables section]**
-
-**Alternative: Quick start with uvx** (may have dependency conflicts):
-```json
-{
-  "feed_reader": {
+  "feed-reader": {
     "command": "uvx",
-    "args": ["feed_reader-server"]
+    "args": ["feed-reader-server"]
   }
 }
 ```
 
-### 3. Get your credentials (if needed)
-
-**[➡️ REPLACE: If your server requires API keys or credentials, explain how to obtain them:]
-- **API Key**: Get from https://example.com/api-keys
-- **Base URL**: Your instance URL (e.g., https://api.example.com)
-**[End of optional credentials section]**
-
-### 4. Start using the tools
+### 3. Start using the tools
 
 Once configured, you can ask your AI assistant to:
-**[➡️ REPLACE: Add 2-3 example requests users might make:]
-- "Use the echo tool to test the connection"
-- "Transform 'hello world' to uppercase"
+- "Add Simon Willison's blog to my feeds"
+- "What's new in my feeds today?"
+- "Show me articles from the last week"
+- "Mark all articles as read"
 
 ## Features
 
-**[➡️ REPLACE: List the key features of your MCP server:]
-- Example echo tool with text transformation
-- Support for both stdio and SSE transports
-- Comprehensive logging with automatic rotation
-- Cross-platform compatibility (Linux, macOS, Windows)
+- **Feed Management** - Add, remove, and list RSS/Atom feeds with auto-discovery
+- **Article Tracking** - Scan for new articles, filter by date/blog/read status
+- **Read Status** - Mark articles as read/unread individually or in bulk
+- **Auto-Discovery** - Automatically finds RSS feeds from blog URLs
+- **Multiple Transports** - STDIO and Streamable HTTP support
+- **Unified Logging** - SQLite-based logging with Streamlit UI
+- **Docker Support** - One-command deployment
 
 ## Available Tools
 
-**[➡️ REPLACE: Document each tool your server provides. Follow this format for each tool:]
+### add_blog
 
-### echo
-
-A simple tool for testing that echoes back the input text with optional transformations.
+Add a new RSS/Atom feed to track.
 
 **Parameters:**
-- `text` (required, string): The text to echo back
-- `transform` (optional, string): Transform to apply - either "upper" or "lower"
+- `name` (required, string): Display name for the blog
+- `url` (required, string): Blog URL (RSS feed will be auto-discovered)
+- `feed_url` (optional, string): Direct RSS feed URL (skips auto-discovery)
+- `scrape_selector` (optional, string): CSS selector for scraping non-RSS sites
 
-**Returns:**
-- JSON object containing:
-  - `text`: The echoed text (possibly transformed)
-
-**Examples:**
-
-Basic echo:
+**Example:**
 ```json
-// Request
 {
-  "text": "Hello, World!"
-}
-
-// Response
-{
-  "text": "Hello, World!"
+  "name": "Simon Willison",
+  "url": "https://simonwillison.net"
 }
 ```
 
-With transformation:
-```json
-// Request
-{
-  "text": "Hello, World!",
-  "transform": "upper"
-}
+### remove_blog
 
-// Response
+Remove a feed from tracking.
+
+**Parameters:**
+- `name` (required, string): Name of the blog to remove
+
+### list_blogs
+
+List all tracked feeds with article counts.
+
+**Returns:** List of blogs with unread/total article counts.
+
+### scan_blogs
+
+Fetch new articles from feeds.
+
+**Parameters:**
+- `blog_name` (optional, string): Scan only this blog (scans all if omitted)
+
+### list_articles
+
+List articles with filtering options.
+
+**Parameters:**
+- `blog_name` (optional, string): Filter by blog name
+- `include_read` (optional, boolean): Include read articles (default: false)
+- `limit` (optional, integer): Maximum articles to return (default: 50)
+- `days` (optional, integer): Articles from last N days
+- `since` (optional, string): Articles after this date (YYYY-MM-DD)
+- `before` (optional, string): Articles before this date (YYYY-MM-DD)
+
+**Example:**
+```json
 {
-  "text": "HELLO, WORLD!"
+  "blog_name": "Simon Willison",
+  "days": 7,
+  "include_read": true
 }
 ```
 
-## Alternative Configuration Methods
+### mark_article_read
 
-### Using a different MCP client
+Mark a single article as read.
 
-The configuration above works for Claude Desktop and Cline. For other MCP clients:
+**Parameters:**
+- `article_id` (required, integer): ID of the article to mark
 
-1. Use `uvx feed_reader-server` as the command
-2. Set any required environment variables
-3. Consult your MCP client's documentation for specific configuration format
+### mark_article_unread
 
-### Using uv tool (Recommended for AI Assistants)
+Mark an article as unread.
 
-For isolated installation that avoids dependency conflicts:
+**Parameters:**
+- `article_id` (required, integer): ID of the article to mark
+
+### mark_all_read
+
+Mark all articles as read.
+
+**Parameters:**
+- `blog_name` (optional, string): Only mark articles from this blog
+
+## Docker Deployment
+
+Run the MCP server as a Docker container for isolated, reproducible deployments.
+
+### Quick Start
 
 ```bash
-# Install as an isolated tool
-uv tool install feed_reader
-
-# Find the installed binary location
-uv tool list | grep feed_reader
-# Or on macOS/Linux:
-which feed_reader-server
-# Or on Windows:
-where feed_reader-server
+python scripts/docker.py start
 ```
 
-Then use this configuration with the absolute path:
-```json
-{
-  "feed_reader": {
-    "command": "/path/to/feed_reader-server"
-  }
-}
-```
+This builds the image, starts the container, and verifies health. The MCP endpoint will be available at `http://localhost:19000/mcp`.
 
-**Note**: Replace `/path/to/` with the actual path from the commands above.
+### Commands
 
-### Running from source
+| Command | Description |
+|---------|-------------|
+| `python scripts/docker.py start` | Build image and start container |
+| `python scripts/docker.py stop` | Stop and remove container |
+| `python scripts/docker.py restart` | Restart container (without rebuild) |
+| `python scripts/docker.py update` | Rebuild image and restart (for code changes) |
+| `python scripts/docker.py status` | Show container status |
+| `python scripts/docker.py logs` | Tail container logs |
 
-For development or testing from source code:
+### Environment Variables
 
-```json
-{
-  "feed_reader": {
-    "command": "python",
-    "args": ["-m", "feed_reader.server.app"],
-    "env": {
-      "PYTHONPATH": "/path/to/feed_reader"
-    }
-  }
-}
-```
-
-## Installation Options
-
-### Quick Start with uvx (Simplest)
-
-The configuration above using `uvx` will automatically download and run the server without installation. This is the simplest option but may have conflicts if you have other Python packages installed globally.
-
-### Isolated Installation with uv tool (Most Reliable)
-
-For a clean, isolated installation that prevents dependency conflicts:
-
-```bash
-# Install the MCP server as an isolated tool
-uv tool install feed_reader
-
-# Verify installation and find the binary path
-uv tool list | grep feed_reader
-
-# Platform-specific path discovery:
-# macOS/Linux:
-which feed_reader-server
-# Example output: /Users/username/.local/bin/feed_reader-server
-
-# Windows:
-where feed_reader-server
-# Example output: C:\Users\username\.local\bin\feed_reader-server.exe
-```
-
-**Important**: After installation, update your MCP client configuration to use the absolute path returned by the `which` or `where` command.
-
-### Install from Source (Development)
-
-For development or testing from source code:
-
-```bash
-git clone <repository-url>
-cd feed_reader
-
-# Create and activate virtual environment
-uv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install in development mode
-uv pip install -e .
-```
-
-Note: This requires the package to be published to PyPI. See [DEVELOPMENT.md](DEVELOPMENT.md#publishing-to-pypi) for publishing instructions.
-
-## Troubleshooting
-
-### Common Issues
-
-**[➡️ REPLACE: Add common issues users might face. Here are some examples:]
-
-1. **"Tool not found" error**
-   - Ensure the server is running and properly configured
-   - Check that the tool name is spelled correctly
-   - Verify your MCP client is connected to the server
-
-2. **Connection errors**
-   - Check that no other process is using port 3001 (for SSE transport)
-   - Verify your MCP client configuration is correct
-   - Try restarting your MCP client
-
-3. **Missing environment variables**
-   - Ensure all required environment variables are set in your configuration
-   - Check for typos in variable names
-   - Verify credentials are valid and not expired
-
-**[End of examples - customize based on your server's specific issues]**
-
-### Dependency Conflicts
-
-If you encounter dependency conflicts when using `uvx`:
-
-1. **Use isolated installation instead**:
-   ```bash
-   # Install as an isolated tool to avoid conflicts
-   uv tool install feed_reader
-   
-   # Find the binary path
-   which feed_reader-server  # macOS/Linux
-   where feed_reader-server  # Windows
-   ```
-
-2. **Update your MCP client configuration** to use the absolute path from step 1
-
-3. **If conflicts persist**, check for conflicting global packages:
-   ```bash
-   # List all globally installed packages
-   uv pip list
-   
-   # Consider using a virtual environment for development
-   ```
-
-## Requirements
-
-- Python 3.11 or 3.12
-- Operating Systems: Linux, macOS, Windows
-
-**[➡️ REPLACE: Add any additional requirements specific to your MCP server:]
-- Special system dependencies
-- External services or APIs needed
-- Network access requirements
-- Hardware requirements (if any)
-**[End of optional requirements]**
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MCP_PORT` | `19000` | Host port mapped to the container |
+| `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
+| `MCP_DNS_REBINDING_PROTECTION` | `false` | Enable DNS rebinding protection |
+| `MCP_ALLOWED_HOSTS` | _(empty)_ | Comma-separated allowed Host headers |
 
 ## Logging
 
@@ -296,16 +192,18 @@ The server logs all activity to both stderr and a rotating log file. Log files a
 Logs rotate at 10MB with 5 backups kept. Control verbosity with `LOG_LEVEL`:
 
 ```bash
-LOG_LEVEL=DEBUG uvx feed_reader-server
+LOG_LEVEL=DEBUG python -m feed_reader.server.app
 ```
+
+## Requirements
+
+- Python 3.11 or 3.12
+- Operating Systems: Linux, macOS, Windows
+- Docker (optional, for containerized deployment)
 
 ## Development
 
-For development setup, testing, and contribution guidelines, see [DEVELOPMENT.md](DEVELOPMENT.md).
-
-## AI Assistant Configuration
-
-For detailed setup instructions for AI coding assistants (Claude, Cline, etc.), see [SETUP_PROMPT.md](SETUP_PROMPT.md).
+For development setup, testing, and contribution guidelines, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md).
 
 ## License
 
@@ -314,7 +212,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Author
 
 Tim Kitchens - codingthefuturewithai@gmail.com
-
----
-
-**[➡️ FINAL REMINDER: Replace all sections marked with ➡️ with content specific to your MCP server. Remove this reminder when done.]**
